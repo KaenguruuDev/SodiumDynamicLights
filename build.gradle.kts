@@ -10,6 +10,11 @@ base {
     archivesName = property("mod.archive_name") as String
 }
 
+tasks.withType<Jar>().configureEach {
+    archiveBaseName.set("SodiumDynamicLights")
+    archiveVersion.set("${project.version}-KaenguruuDev")
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)

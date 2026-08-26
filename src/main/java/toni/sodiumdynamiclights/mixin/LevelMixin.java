@@ -9,7 +9,6 @@
 
 package toni.sodiumdynamiclights.mixin;
 
-import net.minecraft.util.profiling.ProfilerFiller;
 import toni.sodiumdynamiclights.DynamicLightSource;
 import toni.sodiumdynamiclights.SodiumDynamicLights;
 import net.minecraft.core.BlockPos;
@@ -20,11 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import java.util.Iterator;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Level.class)
 public abstract class LevelMixin {
@@ -34,20 +29,20 @@ public abstract class LevelMixin {
 	@Shadow
 	public abstract @Nullable BlockEntity getBlockEntity(BlockPos pos);
 
-	@Inject(
+	@Redirect(
 			method = "tickBlockEntities",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V",
-					shift = At.Shift.BEFORE
-			),
-			locals = LocalCapture.CAPTURE_FAILHARD
+					target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V"
+			)
 	)
-	private void onBlockEntityTick(CallbackInfo ci, ProfilerFiller profiler, Iterator iter, TickingBlockEntity blockEntityTickInvoker) {
+	private void onBlockEntityTick(TickingBlockEntity blockEntityTickInvoker) {
 		if (this.isClientSide() && SodiumDynamicLights.get().config.getBlockEntitiesLightSource().get()) {
 			var blockEntity = this.getBlockEntity(blockEntityTickInvoker.getPos());
 			if (blockEntity != null)
 				((DynamicLightSource) blockEntity).sdl$dynamicLightTick();
 		}
+
+		blockEntityTickInvoker.tick();
 	}
 }

@@ -9,14 +9,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import toni.sodiumdynamiclights.SodiumDynamicLights;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.DeltaTracker;
 
 @Mixin(LevelRenderer.class)
 public abstract class WorldRendererMixin {
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
 
-    private void beforeRender(PoseStack poseStack, float partialTick, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
+    private void beforeRender(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f modelViewMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
         SodiumDynamicLights.get().updateAll((LevelRenderer) (Object) this);
     }
 }
