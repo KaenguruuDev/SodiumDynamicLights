@@ -26,6 +26,10 @@ java {
 repositories {
     mavenCentral()
 
+    maven("https://maven.caffeinemc.net/releases") {
+        name = "CaffeineMC"
+    }
+
     maven("https://maven.neoforged.net/releases") {
         name = "NeoForge"
     }
@@ -76,7 +80,8 @@ neoForge {
 }
 
 dependencies {
-    implementation("maven.modrinth:AANobbMI:${property("sodium_version")}")
+    implementation("maven.modrinth:sodium:${property("sodium_version")}")
+    compileOnly("net.caffeinemc:sodium-neoforge-api:${property("sodium_api_version")}")
 
     compileOnly(
         "com.github.bawnorton.mixinsquared:mixinsquared-common:${property("mixinsquared_version")}"

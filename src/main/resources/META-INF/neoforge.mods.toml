@@ -14,6 +14,9 @@ description="${description}"
 logoFile="assets/${namespace}/textures/mod_logo.png"
 displayURL = "https://github.com/${github}/${name}/"
 
+[modproperties.${id}]
+"sodium:config_api_user" = "toni.sodiumdynamiclights.SodiumDynamicLightsConfigEntrypoint"
+
 [[mixins]]
 config = "mixins.${id}.json"
 
@@ -27,6 +30,6 @@ side="BOTH"
 [[dependencies."${id}"]]
 modId="sodium"
 mandatory=true
-versionRange="[0.6.13,)"
+versionRange="[0.8.13-beta.2,)"
 ordering="AFTER"
 side="CLIENT"

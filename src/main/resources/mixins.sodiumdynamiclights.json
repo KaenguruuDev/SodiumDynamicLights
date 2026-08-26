@@ -26,7 +26,6 @@
     "lightsource.PrimedTntEntityMixin",
     "sodium.ArrayLightDataCacheMixin",
     "sodium.FlatLightPipelineMixin",
-    "sodium.LightDataAccessMixin",
-    "sodium.SodiumOptionsGuiMixin"
+    "sodium.LightDataAccessMixin"
   ]
 }
