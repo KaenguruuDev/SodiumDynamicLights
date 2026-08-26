@@ -15,10 +15,6 @@ import net.minecraft.world.entity.monster.Creeper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-#if mc >= 215
-import net.minecraft.world.entity.EquipmentSlot;
-#endif
-
 import java.util.function.Function;
 
 /**
@@ -83,16 +79,9 @@ public interface DynamicLightHandler<T> {
 		return entity -> {
 			int luminance = 0;
 
-			#if mc >= 215
-			for (var equipmentSlot : EquipmentSlot.VALUES) {
-				var equipped = entity.getItemBySlot(equipmentSlot);
-				luminance = Math.max(luminance, SodiumDynamicLights.getLuminanceFromItemStack(equipped, entity.isUnderWater()));
-			}
-			#else
 			for (var equipped : entity.getAllSlots()) {
 				luminance = Math.max(luminance, SodiumDynamicLights.getLuminanceFromItemStack(equipped, entity.isUnderWater()));
 			}
-			#endif
 
 			return Math.max(luminance, handler.getLuminance(entity));
 		};

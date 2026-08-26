@@ -9,15 +9,11 @@
 
 package toni.sodiumdynamiclights;
 
-import com.google.common.collect.Lists;
-import dev.lambdaurora.lambdynlights.api.item.ItemLightSourceManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import toni.sodiumdynamiclights.accessor.WorldRendererAccessor;
-import dev.lambdaurora.lambdynlights.api.DynamicLightsInitializer;
 import dev.lambdaurora.lambdynlights.api.DynamicLightHandlers;
 import dev.lambdaurora.lambdynlights.api.item.ItemLightSources;
 
@@ -40,78 +36,17 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
-import net.minecraft.server.packs.PackType;
-
-#if mc >= 215
-import net.minecraft.world.entity.EquipmentSlot;
-#endif
-
-#if AFTER_21_1
 import net.neoforged.fml.config.ModConfig;
-#endif
-
-#if FABRIC
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
-
-	#if mc >= 215
-	import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
-	#elif mc >= 211
-    import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
-	#endif
-
-	#if AFTER_21_1
-    import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-	import net.neoforged.fml.config.ModConfig;
-    import net.neoforged.neoforge.common.ModConfigSpec;
-    import net.neoforged.neoforge.common.ModConfigSpec.*;
-    #endif
-
-    #if CURRENT_20_1
-    import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigRegistry;
-	import net.minecraftforge.fml.config.ModConfig;
-	import net.minecraftforge.common.ForgeConfigSpec;
-	import net.minecraftforge.common.ForgeConfigSpec.*;
-    #endif
-
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-#endif
-
-#if NEO
-#if mc >= 215
-import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
-#else
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
-#endif
-
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-#endif
-
-#if FORGE
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.common.ForgeConfig;
-#endif
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  *
@@ -122,10 +57,8 @@ import net.minecraftforge.common.ForgeConfig;
  * @since 1.0.0
  */
 
-#if FORGELIKE
 @Mod("sodiumdynamiclights")
-#endif
-public class SodiumDynamicLights #if FABRIC implements ClientModInitializer #endif {
+public class SodiumDynamicLights {
 	public static final String NAMESPACE = "sodiumdynamiclights";
 	private static final double MAX_RADIUS = 7.75;
 	private static final double MAX_RADIUS_SQUARED = MAX_RADIUS * MAX_RADIUS;
@@ -137,94 +70,16 @@ public class SodiumDynamicLights #if FABRIC implements ClientModInitializer #end
 	private long lastUpdate = System.currentTimeMillis();
 	private int lastUpdateCount = 0;
 
-	public SodiumDynamicLights(#if NEO IEventBus modEventBus, ModContainer modContainer #endif) {
-		#if NEO
+	public SodiumDynamicLights(IEventBus modEventBus, ModContainer modContainer) {
 		modEventBus.addListener(this::clientSetup);
+		NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
 		modContainer.registerConfig(ModConfig.Type.CLIENT, DynamicLightsConfig.SPECS);
-		#endif
-
-		#if FORGE
-		var context = FMLJavaModLoadingContext.get();
-		var modEventBus = context.getModEventBus();
-		modEventBus.addListener(this::clientSetup);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, DynamicLightsConfig.SPECS);
-        #endif
 	}
 
-	#if FABRIC @Override #endif
-	public void onInitializeClient() {
+	private void onInitializeClient() {
 		INSTANCE = this;
 		this.log("Initializing SodiumDynamicLights...");
-
-		#if FABRIC
-			ClientLifecycleEvents.CLIENT_STOPPING.register((mc) -> {
-				DynamicLightsConfig.SPECS.save();
-			});
-
-			#if mc >= 215
-			ConfigRegistry.INSTANCE.register(SodiumDynamicLights.NAMESPACE, ModConfig.Type.CLIENT, DynamicLightsConfig.SPECS);
-			#elif AFTER_21_1
-			NeoForgeConfigRegistry.INSTANCE.register(SodiumDynamicLights.NAMESPACE, ModConfig.Type.CLIENT, DynamicLightsConfig.SPECS);
-			#else
-			ForgeConfigRegistry.INSTANCE.register(SodiumDynamicLights.NAMESPACE, ModConfig.Type.CLIENT, DynamicLightsConfig.SPECS);
-			#endif
-
-			#if mc >= 21
-			FabricLoader.getInstance().getEntrypointContainers("sodiumdynamiclights", DynamicLightsInitializer.class)
-					.stream().map(EntrypointContainer::getEntrypoint)
-					.forEach(dynamicLightsInitializer -> { dynamicLightsInitializer.onInitializeDynamicLights(); });
-			#endif
-
-			FabricLoader.getInstance().getEntrypointContainers("dynamiclights", DynamicLightsInitializer.class)
-					.stream().map(EntrypointContainer::getEntrypoint)
-					.forEach(dynamicLightsInitializer -> {
-						#if mc >= 211
-						try {
-							Arrays.stream(dynamicLightsInitializer.getClass().getDeclaredMethods())
-								.filter(method -> method.getName().equals("onInitializeDynamicLights") && method.getParameterCount() == 0)
-								.findFirst()
-								.get().invoke(dynamicLightsInitializer);
-						} catch (Exception e) {
-							try {
-								this.log("Mod " + dynamicLightsInitializer.toString() + " failed legacy dynamic lights API call, trying patch...");
-
-								Arrays.stream(dynamicLightsInitializer.getClass().getDeclaredMethods())
-									.filter(method -> method.getName().equals("onInitializeDynamicLights") && method.getParameterCount() == 1)
-									.findFirst()
-									.get().invoke(dynamicLightsInitializer, new ItemLightSourceManager() { });
-							} catch (Exception e2) {
-								this.log("Failed patched method. Dynamic lights integration for this mod will likely not work!");
-								this.log(e2.getMessage());
-							}
-						}
-						#else
-						dynamicLightsInitializer.onInitializeDynamicLights();
-						#endif
-					});
-
-			ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
-				@Override
-				public ResourceLocation getFabricId() {
-					#if AFTER_21_1
-					return ResourceLocation.fromNamespaceAndPath(NAMESPACE, "dynamiclights_resources");
-					#else
-					return new ResourceLocation(NAMESPACE, "dynamiclights_resources");
-					#endif
-				}
-
-				@Override
-				public void onResourceManagerReload(ResourceManager manager) {
-					ItemLightSources.load(manager);
-				}
-			});
-
-			WorldRenderEvents.START.register(context -> {
-				this.updateAll(context.worldRenderer());
-			});
-		#endif
-
-		#if FORGELIKE
-			registerReloadListener(PackType.CLIENT_RESOURCES, new SimplePreparableReloadListener() {
+		registerReloadListener(new SimplePreparableReloadListener<>() {
 				@Override
 				protected Object prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
 					return null;
@@ -235,49 +90,23 @@ public class SodiumDynamicLights #if FABRIC implements ClientModInitializer #end
 					ItemLightSources.load(resourceManager);
 				}
 			});
-		#endif
 
 		DynamicLightHandlers.registerDefaultHandlers();
 	}
 
-	#if FORGELIKE
-		@SubscribeEvent
-		public void clientSetup(FMLClientSetupEvent event) {
-			onInitializeClient();
-		}
+	private void clientSetup(FMLClientSetupEvent event) {
+		onInitializeClient();
+	}
 
-		private static List<PreparableReloadListener> serverDataReloadListeners = Lists.newArrayList();
+	private static final List<PreparableReloadListener> RELOAD_LISTENERS = new ArrayList<>();
 
-		public static void registerReloadListener(PackType type, SimplePreparableReloadListener listener) {
-			if (type == PackType.SERVER_DATA) {
-				serverDataReloadListeners.add(listener);
-			} else if (type == PackType.CLIENT_RESOURCES) {
-				registerClient(listener);
-			}
-		}
+	public static void registerReloadListener(PreparableReloadListener listener) {
+		RELOAD_LISTENERS.add(listener);
+	}
 
-		private static void registerClient(PreparableReloadListener listener) {
-			#if mc < 215
-			((ReloadableResourceManager) Minecraft.getInstance().getResourceManager()).registerReloadListener(listener);
-			#endif
-		}
-
-		#if mc >= 215
-		@SubscribeEvent
-		public static void addReloadListeners(AddServerReloadListenersEvent event) {
-			for (PreparableReloadListener listener : serverDataReloadListeners) {
-				event.addListener(ResourceLocation.fromNamespaceAndPath(NAMESPACE, "data"), listener);
-			}
-		}
-		#else
-		@SubscribeEvent
-		public static void addReloadListeners(AddReloadListenerEvent event) {
-			for (PreparableReloadListener listener : serverDataReloadListeners) {
-				event.addListener(listener);
-			}
-		}
-		#endif
-    #endif
+	private void addReloadListeners(AddReloadListenerEvent event) {
+		RELOAD_LISTENERS.forEach(event::addListener);
+	}
 
 	/**
 	 * Updates all light sources.
@@ -637,18 +466,10 @@ public class SodiumDynamicLights #if FABRIC implements ClientModInitializer #end
 		boolean submergedInFluid = isEyeSubmergedInFluid(entity);
 		int luminance = 0;
 
-		#if mc >= 215
-		for (var equipmentSlot : EquipmentSlot.VALUES) {
-			var equipped = entity.getItemBySlot(equipmentSlot);
-			if (!equipped.isEmpty())
-				luminance = Math.max(luminance, SodiumDynamicLights.getLuminanceFromItemStack(equipped, submergedInFluid));
-		}
-		#else
 		for (var equipped : entity.getAllSlots()) {
 			if (!equipped.isEmpty())
 				luminance = Math.max(luminance, SodiumDynamicLights.getLuminanceFromItemStack(equipped, submergedInFluid));
 		}
-		#endif
 
 
 

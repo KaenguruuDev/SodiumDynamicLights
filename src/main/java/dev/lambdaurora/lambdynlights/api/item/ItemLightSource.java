@@ -21,14 +21,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
-#if mc>=214
-import net.minecraft.core.HolderSet;
-#endif
-
-#if AFTER_21_1
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.BlockItemStateProperties;
-#endif
 
 import java.util.Optional;
 
@@ -105,15 +99,7 @@ public abstract class ItemLightSource {
 
 		var affectId = ResourceLocation.tryParse(json.get("item").getAsString());
 
-		#if mc >= 214
-		var ref = BuiltInRegistries.ITEM.get(affectId);
-		if (ref.isEmpty())
-			return Optional.empty();
-
-		var item = ref.get().value();
-		#else
 		var item = BuiltInRegistries.ITEM.get(affectId);
- 		#endif
 
 		if (item == Items.AIR)
 			return Optional.empty();
@@ -134,7 +120,7 @@ public abstract class ItemLightSource {
 			} else {
 				var blockId = ResourceLocation.tryParse(luminanceStr);
 				if (blockId != null) {
-					var block = BuiltInRegistries.BLOCK.get(blockId) #if mc >= 214 .get().value() #endif;
+					var block = BuiltInRegistries.BLOCK.get(blockId);
 					if (block != Blocks.AIR)
 						return Optional.of(new BlockItemLightSource(id, item, block.defaultBlockState(), waterSensitive));
 				}
@@ -179,29 +165,12 @@ public abstract class ItemLightSource {
 		}
 
 		static int getLuminance(ItemStack stack, BlockState state) {
-			#if AFTER_21_1
 			var nbt = stack.getComponents().getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY);
 
 			if (!nbt.isEmpty()) {
 				state = nbt.apply(state);
 			}
 
-			#else
-			var nbt = stack.getTag();
-
-			if (nbt != null) {
-				var blockStateTag = nbt.getCompound("BlockStateTag");
-				var stateManager = state.getBlock().getStateDefinition();
-
-				for (var key : blockStateTag.getAllKeys()) {
-					var property = stateManager.getProperty(key);
-					if (property != null) {
-						var value = blockStateTag.get(key).toString();
-						state = BlockItem.updateState(state, property, value);
-					}
-				}
-			}
-			#endif
 
 			return state.getLightEmission();
 		}

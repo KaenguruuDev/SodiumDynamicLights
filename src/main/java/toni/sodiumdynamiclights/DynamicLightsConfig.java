@@ -11,38 +11,11 @@ package toni.sodiumdynamiclights;
 
 import java.util.HashMap;
 
-
-
-#if FABRIC
-	import net.fabricmc.loader.api.FabricLoader;
-
-	#if AFTER_21_1
-    import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-	import net.neoforged.fml.config.ModConfig;
-    import net.neoforged.neoforge.common.ModConfigSpec;
-    import net.neoforged.neoforge.common.ModConfigSpec.*;
-    #endif
-
-    #if CURRENT_20_1
-	import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigRegistry;
-	import net.minecraftforge.fml.config.ModConfig;
-	import net.minecraftforge.common.ForgeConfigSpec;
-	import net.minecraftforge.common.ForgeConfigSpec.*;
-    #endif
-#endif
-
-#if NEO
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.*;
-#endif
-
-#if FORGE
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.*;
-#endif
 
 public class DynamicLightsConfig {
-	public static final #if BEFORE_21_1 ForgeConfigSpec #else ModConfigSpec #endif SPECS;
+	public static final ModConfigSpec SPECS;
 
 	public static final EnumValue<DynamicLightsMode> DYNAMIC_LIGHTS_MODE;
 

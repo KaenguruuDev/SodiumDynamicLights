@@ -9,7 +9,7 @@ issueTrackerURL = "https://github.com/${github}/${name}/issues"
 modId="${id}"
 version="${modversion}"
 displayName="${display_name}"
-authors="${author}, LambdAurora"
+authors="${author} (fork maintainer), toni, LambdAurora"
 description="${description}"
 logoFile="assets/${namespace}/textures/mod_logo.png"
 displayURL = "https://github.com/${github}/${name}/"
@@ -23,3 +23,10 @@ mandatory=true
 versionRange="${mc}"
 ordering="NONE"
 side="BOTH"
+
+[[dependencies."${id}"]]
+modId="sodium"
+mandatory=true
+versionRange="[0.6.13,)"
+ordering="AFTER"
+side="CLIENT"

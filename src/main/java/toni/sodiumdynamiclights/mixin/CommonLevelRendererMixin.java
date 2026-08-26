@@ -27,16 +27,13 @@ public abstract class CommonLevelRendererMixin implements WorldRendererAccessor 
 	@Override
 	public abstract void sodiumdynamiclights$scheduleChunkRebuild(int x, int y, int z, boolean important);
 
-	#if mc < 215
-
 	@Inject(
 			method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I",
 			at = @At("TAIL"),
 			cancellable = true
 	)
 	private static void onGetLightmapCoordinates(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-		if (!level.getBlockState(pos).isSolidRender(#if mc < 214 level, pos #endif) && SodiumDynamicLights.get().config.getDynamicLightsMode().isEnabled())
+		if (!level.getBlockState(pos).isSolidRender(level, pos) && SodiumDynamicLights.get().config.getDynamicLightsMode().isEnabled())
 			cir.setReturnValue(SodiumDynamicLights.get().getLightmapWithDynamicLight(pos, cir.getReturnValue()));
 	}
-	#endif
 }

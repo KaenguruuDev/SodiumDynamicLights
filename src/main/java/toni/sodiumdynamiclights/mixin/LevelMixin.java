@@ -10,7 +10,6 @@
 package toni.sodiumdynamiclights.mixin;
 
 import net.minecraft.util.profiling.ProfilerFiller;
-
 import toni.sodiumdynamiclights.DynamicLightSource;
 import toni.sodiumdynamiclights.SodiumDynamicLights;
 import net.minecraft.core.BlockPos;
@@ -23,11 +22,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-#if AFTER_21_1
-import com.llamalad7.mixinextras.sugar.Local;
-#else
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-#endif
 
 import java.util.Iterator;
 
@@ -45,15 +40,11 @@ public abstract class LevelMixin {
 					value = "INVOKE",
 					target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V",
 					shift = At.Shift.BEFORE
-			)
-			#if BEFORE_21_1 , locals = LocalCapture.CAPTURE_FAILHARD #endif
+			),
+			locals = LocalCapture.CAPTURE_FAILHARD
 	)
-	#if AFTER_21_1
-	private void onBlockEntityTick(CallbackInfo ci, @Local boolean isRemoved, @Local TickingBlockEntity blockEntityTickInvoker) {
-	#else
 	private void onBlockEntityTick(CallbackInfo ci, ProfilerFiller profiler, Iterator iter, TickingBlockEntity blockEntityTickInvoker) {
-	#endif
-		if (this.isClientSide() && SodiumDynamicLights.get().config.getBlockEntitiesLightSource().get() && #if AFTER_21_1 !isRemoved #else true #endif) {
+		if (this.isClientSide() && SodiumDynamicLights.get().config.getBlockEntitiesLightSource().get()) {
 			var blockEntity = this.getBlockEntity(blockEntityTickInvoker.getPos());
 			if (blockEntity != null)
 				((DynamicLightSource) blockEntity).sdl$dynamicLightTick();
